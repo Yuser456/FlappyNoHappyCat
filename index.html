@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flappy Roblox - Carte de Tom</title>
+
+<!-- Favicon pour navigateur -->
+<link rel="icon" href="https://img.freepik.com/photos-premium/texture-sombre-abstraite-fond-naturel-feuilles-tropicales-pour-banniere-design-papier-peint_1060463-4257.jpg" type="image/png">
+
+<!-- Apple Touch Icon pour Safari / iPhone -->
+<link rel="apple-touch-icon" href="https://img.freepik.com/photos-premium/texture-sombre-abstraite-fond-naturel-feuilles-tropicales-pour-banniere-design-papier-peint_1060463-4257.jpg">
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    background: url('https://img.freepik.com/photos-premium/texture-sombre-abstraite-fond-naturel-feuilles-tropicales-pour-banniere-design-papier-peint_1060463-4257.jpg') 
+                no-repeat center center; /* image centrée */
+    background-size: contain; /* image cadrée au milieu, garde ses proportions */
+    background-color: #111; /* fond sombre derrière l'image */
+    color: white;
+    text-align: center;
+  }
+
+  #menu, #gameContainer, #deathMenu {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0; left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0,0,0,0.5); /* overlay sombre pour lisibilité */
+  }
+
+  button {
+    padding: 15px 30px;
+    font-size: 18px;
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(45deg, #4CAF50, #1B5E20);
+    color: white;
+    margin-top: 20px;
+    transition: transform 0.2s;
+  }
+
+  button:hover {
+    transform: scale(1.1);
+  }
+
+  canvas {
+    display: block;
+    margin: 0 auto;
+    border-radius: 15px;
+    background-color: rgba(0,0,0,0.3); /* léger fond sombre pour le canvas */
+  }
+
+  h1, p {
+    color: #fff;
+    text-shadow: 1px 1px 5px black;
+  }
+</style>
+</head>
+<body>
+
+<!-- Menu d'accueil -->
+<div id="menu">
+  <h1>Bienvenue sur la Carte de Tom</h1>
+  <p>Un mini-jeu vous est proposé !</p>
+  <button id="startButton">Commencer le jeu</button>
+</div>
+
+<!-- Conteneur du jeu -->
+<div id="gameContainer" style="display:none;">
+  <canvas id="gameCanvas" width="360" height="600"></canvas>
+</div>
+
+<!-- Menu de mort -->
+<div id="deathMenu" style="display:none;">
+  <h1>Vous êtes mort 😵</h1>
+  <button id="restartButton">Recommencer</button>
+</div>
+
+<script>
+const startButton = document.getElementById('startButton');
+const menu = document.getElementById('menu');
+const gameContainer = document.getElementById('gameContainer');
+const deathMenu = document.getElementById('deathMenu');
+const restartButton = document.getElementById('restartButton');
+
+startButton.addEventListener('click', () => {
+  menu.style.display = 'none';
+  gameContainer.style.display = 'block';
+  initGame();
+});
+
+restartButton.addEventListener('click', () => {
+  deathMenu.style.display = 'none';
+  gameContainer.style.display = 'block';
+  initGame();
+});
+
+function initGame() {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const playerImg = new Image();
+  playerImg.src = 'https://tr.rbxcdn.com/30DAY-AvatarHeadshot-D6F852D8C3DDFE85F2BDE83FE45F8EC9-Png/150/150/AvatarHeadshot/Webp/noFilter';
+
+  let player = { x:50, y:300, w:50, h:50, gravity:0.2, lift:-5, vel:0 };
+  let pipes = [], pipeWidth=60, gap=250, frame=0, score=0;
+
+  function addPipe() {
+    let topHeight = Math.random() * (canvas.height-gap-50) + 30;
+    pipes.push({ x:canvas.width, top:topHeight, bottom:canvas.height-topHeight-gap });
+  }
+
+  document.addEventListener('keydown', ()=>player.vel=player.lift);
+  document.addEventListener('click', ()=>player.vel=player.lift);
+  document.addEventListener('touchstart', ()=>player.vel=player.lift);
+
+  function endGame(){ 
+    gameContainer.style.display='none'; 
+    deathMenu.style.display='flex'; 
+  }
+
+  function gameLoop() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Joueur
+    player.vel += player.gravity;
+    player.y += player.vel;
+    ctx.drawImage(playerImg,player.x,player.y,player.w,player.h);
+
+    // Pipes
+    if(frame%150===0) addPipe();
+    for(let i=pipes.length-1;i>=0;i--){
+      pipes[i].x-=2;
+      ctx.fillStyle='#4CAF50';
+      ctx.fillRect(pipes[i].x,0,pipeWidth,pipes[i].top);
+      ctx.fillRect(pipes[i].x,canvas.height-pipes[i].bottom,pipeWidth,pipes[i].bottom);
+
+      // Collision
+      if(player.x+player.w>pipes[i].x && player.x<pipes[i].x+pipeWidth && (player.y< pipes[i].top || player.y+player.h>canvas.height-pipes[i].bottom)){
+        endGame(); 
+        return;
+      }
+
+      if(pipes[i].x+pipeWidth==player.x) score++;
+      if(pipes[i].x+pipeWidth<0) pipes.splice(i,1);
+    }
+
+    if(player.y+player.h>canvas.height || player.y<0){ endGame(); return; }
+
+    // Score
+    ctx.fillStyle='#fff';
+    ctx.font='22px Arial';
+    ctx.shadowColor='black';
+    ctx.shadowBlur=4;
+    ctx.fillText('Score: '+score,10,30);
+
+    frame++;
+    requestAnimationFrame(gameLoop);
+  }
+
+  playerImg.onload=()=>gameLoop();
+}
+</script>
+
+</body>
+</html>
