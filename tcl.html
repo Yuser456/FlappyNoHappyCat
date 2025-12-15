@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCL Jeux - Flappy Bus</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    background: #111;
+    color: white;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 390px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #menu {
+    justify-content: center;
+    gap: 40px;
+  }
+
+  h1 {
+    font-size: 26px;
+    text-align: center;
+  }
+
+  button {
+    padding: 16px 40px;
+    font-size: 18px;
+    border: none;
+    border-radius: 16px;
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+  }
+
+  #game {
+    display: none;
+  }
+
+  canvas {
+    margin-top: 20px;
+    background: #222;
+    border-radius: 16px;
+  }
+
+  #gameOver {
+    display: none;
+    justify-content: center;
+    gap: 20px;
+    text-align: center;
+  }
+
+  #godMsg {
+    color: gold;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div class="screen" id="menu">
+  <h1>Bienvenue sur<br><strong>TCL Jeux</strong></h1>
+  <button onclick="startGame()">Jouer</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game">
+  <canvas id="canvas" width="360" height="600"></canvas>
+</div>
+
+<!-- GAME OVER -->
+<div class="screen" id="gameOver">
+  <h1>💀 Vous êtes mort</h1>
+  <p id="finalScore"></p>
+  <p id="godMsg"></p>
+  <button onclick="restart()">Rejouer</button>
+</div>
+
+<script>
+const menu = document.getElementById("menu");
+const game = document.getElementById("game");
+const gameOverScreen = document.getElementById("gameOver");
+const finalScore = document.getElementById("finalScore");
+const godMsg = document.getElementById("godMsg");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let bus, pipes, score, frame, running, godMode;
+
+function startGame() {
+  menu.style.display = "none";
+  gameOverScreen.style.display = "none";
+  game.style.display = "flex";
+  init();
+}
+
+function init() {
+  bus = { x: 80, y: 300, v: 0 };
+  pipes = [];
+  score = 0;
+  frame = 0;
+  running = true;
+  godMode = false;
+  godMsg.textContent = "";
+  loop();
+}
+
+function addPipe() {
+  let gap = 300;
+  let top = Math.random() * 160 + 80;
+  pipes.push({ x: canvas.width, top, bottom: top + gap, passed: false });
+}
+
+function getPipeColor() {
+  if (score >= 50) return "orange";
+  if (score >= 10) return "red";
+  return "#4CAF50";
+}
+
+function loop() {
+  if (!running) return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // BUS
+  bus.v += 0.16;
+  bus.y += bus.v;
+
+  // GOD MODE : blocage écran
+  if (godMode) {
+    if (bus.y < 20) {
+      bus.y = 20;
+      bus.v = 0;
+    }
+    if (bus.y > canvas.height - 30) {
+      bus.y = canvas.height - 30;
+      bus.v = 0;
+    }
+  }
+
+  ctx.font = "34px Arial";
+  ctx.fillText("🚍", bus.x, bus.y);
+
+  // PIPES
+  if (frame % 160 === 0) addPipe();
+  ctx.fillStyle = getPipeColor();
+
+  pipes.forEach(p => {
+    p.x -= 1.4;
+    ctx.fillRect(p.x, 0, 50, p.top);
+    ctx.fillRect(p.x, p.bottom, 50, canvas.height);
+
+    // HITBOX
+    let hitX1 = bus.x + 10;
+    let hitX2 = bus.x + 24;
+    let hitY1 = bus.y + 8;
+    let hitY2 = bus.y + 22;
+
+    if (!godMode &&
+      hitX2 > p.x &&
+      hitX1 < p.x + 50 &&
+      (hitY1 < p.top || hitY2 > p.bottom)
+    ) {
+      endGame(false);
+    }
+
+    if (!p.passed && p.x + 50 < bus.x) {
+      p.passed = true;
+      score++;
+    }
+  });
+
+  // LIMITES NORMAL
+  if (!godMode) {
+    if (bus.y > canvas.height - 10) endGame(false);
+    if (bus.y < 10) endGame(true);
+  }
+
+  // SCORE
+  ctx.fillStyle = "white";
+  ctx.font = "20px Arial";
+  ctx.fillText("Score : " + score, 10, 30);
+
+  frame++;
+  requestAnimationFrame(loop);
+}
+
+function endGame(diedInSky) {
+  running = false;
+
+  // CHEAT
+  if (diedInSky && score === 0) {
+    godMode = true;
+    score = 67;
+    bus.y = 300;
+    running = true;
+    godMsg.textContent = "✨ MODE GOD ACTIVÉ ✨";
+    loop();
+    return;
+  }
+
+  game.style.display = "none";
+  gameOverScreen.style.display = "flex";
+  finalScore.textContent = "Score : " + score;
+}
+
+function restart() {
+  startGame();
+}
+
+// CONTROLES
+document.addEventListener("click", () => {
+  if (running) bus.v = -3.8;
+});
+document.addEventListener("touchstart", () => {
+  if (running) bus.v = -3.8;
+});
+</script>
+
+</body>
+</html>
