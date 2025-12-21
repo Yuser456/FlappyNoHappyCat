@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>SpaceDefender</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="apple-touch-icon" sizes="180x180"
+  href="https://tse1.mm.bing.net/th/id/OIP.hFgOdXiBkiXrenH-1PAkawHaHa?cb=ucfimg2&ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3">
+<link rel="icon" type="image/png"
+  href="https://tse1.mm.bing.net/th/id/OIP.hFgOdXiBkiXrenH-1PAkawHaHa?cb=ucfimg2&ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3">
+
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: #000;
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app {
+  width: 320px;
+  background: #0b0f14;
+  border-radius: 22px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(94,231,255,.25);
+}
+
+.logo {
+  width: 90px;
+  height: 90px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+
+h1 {
+  margin: 8px 0 4px;
+  font-size: 22px;
+}
+
+.status {
+  font-size: 14px;
+  color: #9aa4b2;
+  min-height: 20px;
+}
+
+.history {
+  font-size: 12px;
+  color: #666;
+  margin-top: 6px;
+}
+
+button {
+  margin-top: 16px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 14px;
+  background: #5ee7ff;
+  color: #000;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.removeBtn {
+  background: #ff4d4d;
+  color: #fff;
+  margin-top: 10px;
+  display: none;
+}
+
+.credit {
+  margin-top: 14px;
+  font-size: 10px;
+  color: #555;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <img class="logo"
+    src="https://tse1.mm.bing.net/th/id/OIP.hFgOdXiBkiXrenH-1PAkawHaHa?cb=ucfimg2&ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3">
+
+  <h1>SpaceDefender</h1>
+
+  <div class="status" id="status">Système prêt</div>
+  <div class="history" id="history"></div>
+
+  <button id="scanBtn">🛡️ Vérifier les malwares</button>
+  <button class="removeBtn" id="removeBtn">🧹 Supprimer la menace</button>
+
+  <div class="credit">Créé par Tom</div>
+</div>
+
+<script>
+const scanBtn = document.getElementById("scanBtn");
+const removeBtn = document.getElementById("removeBtn");
+const status = document.getElementById("status");
+const history = document.getElementById("history");
+
+function updateHistory(text) {
+  localStorage.setItem("lastScan", text);
+  history.textContent = text;
+}
+
+if (localStorage.getItem("lastScan")) {
+  history.textContent = localStorage.getItem("lastScan");
+}
+
+scanBtn.onclick = () => {
+  scanBtn.disabled = true;
+  removeBtn.style.display = "none";
+
+  const steps = [
+    "Analyse des fichiers système…",
+    "Vérification du réseau…",
+    "Analyse mémoire…",
+    "Détection des scripts suspects…",
+    "Finalisation…"
+  ];
+
+  let i = 0;
+
+  const interval = setInterval(() => {
+    status.textContent = steps[i];
+    i++;
+
+    if (i >= steps.length) {
+      clearInterval(interval);
+
+      // 🎯 1 chance sur 6 de détecter un malware
+      const malwareDetected = Math.floor(Math.random() * 6) === 0;
+
+      if (malwareDetected) {
+        status.textContent = "⚠️ 1 malware détecté sur votre appareil";
+        removeBtn.style.display = "block";
+        updateHistory("Dernier scan : menace détectée");
+      } else {
+        status.textContent = "✔ Aucun malware détecté";
+        scanBtn.textContent = "✔ Système sécurisé";
+        scanBtn.style.background = "#4CAF50";
+        updateHistory("Dernier scan : système sécurisé");
+      }
+
+      scanBtn.disabled = false;
+    }
+  }, 700);
+};
+
+removeBtn.onclick = () => {
+  status.textContent = "✔ Menace supprimée avec succès";
+  removeBtn.style.display = "none";
+  scanBtn.textContent = "✔ Système sécurisé";
+  scanBtn.style.background = "#4CAF50";
+  updateHistory("Dernier scan : menace supprimée");
+};
+</script>
+
+</body>
+</html>
